@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login — Resume Skill Analyzer</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="page-center">
+
+  <div class="card fade-up">
+    <!-- Logo -->
+    <div class="wordmark">
+      <div class="wordmark-icon">RSA</div>
+      <div class="wordmark-text">
+        <span>Resume Skill</span>
+        Analyzer
+      </div>
+    </div>
+
+    <h2 style="margin-bottom:0.3rem;">Welcome back</h2>
+    <p style="color:var(--ink-muted);font-size:0.9rem;margin-bottom:1.75rem;">
+      Sign in to your account to continue.
+    </p>
+
+    <!-- Alert -->
+    <div class="alert alert-error" id="alert-msg"></div>
+
+    <!-- Form -->
+    <div class="form-group">
+      <label for="email">Email address</label>
+      <input type="email" id="email" placeholder="you@example.com" autocomplete="email" />
+    </div>
+
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" />
+    </div>
+
+    <button class="btn btn-primary" id="login-btn" onclick="handleLogin()">
+      <span class="spinner" id="spinner"></span>
+      <span id="btn-text">Sign In</span>
+    </button>
+
+    <div class="divider">or</div>
+
+    <div class="auth-footer">
+      Don't have an account?
+      <a href="register.html">Create one →</a>
+    </div>
+  </div>
+
+</div>
+
+<script src="script.js"></script>
+<script>
+  // Redirect if already logged in
+  if (localStorage.getItem('rsa_token')) {
+    window.location.href = 'dashboard.html';
+  }
+
+  async function handleLogin() {
+    const email    = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const alert    = document.getElementById('alert-msg');
+    const spinner  = document.getElementById('spinner');
+    const btnText  = document.getElementById('btn-text');
+    const btn      = document.getElementById('login-btn');
+
+    clearAlert(alert);
+
+    if (!email || !password) {
+      showAlert(alert, 'Please enter your email and password.', 'error');
+      return;
+    }
+
+    btn.disabled = true;
+    spinner.classList.add('show');
+    btnText.textContent = 'Signing in…';
+
+    try {
+      const res  = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || 'Login failed.');
+
+      localStorage.setItem('rsa_token', data.token);
+      localStorage.setItem('rsa_user',  JSON.stringify(data.user));
+      window.location.href = 'dashboard.html';
+
+    } catch (err) {
+      showAlert(alert, err.message, 'error');
+      btn.disabled = false;
+      spinner.classList.remove('show');
+      btnText.textContent = 'Sign In';
+    }
+  }
+
+  // Allow Enter key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleLogin();
+  });
+</script>
+</body>
+</html>

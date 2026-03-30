@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — Resume Skill Analyzer</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="dashboard.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body class="app-body">
+
+<!-- ══════════════════════════════════════════════════════════
+     SIDEBAR
+══════════════════════════════════════════════════════════ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-top">
+    <div class="sidebar-brand">
+      <div class="brand-icon">RSA</div>
+      <div class="brand-text">
+        <span class="brand-name">Skill Analyzer</span>
+        <span class="brand-sub">v2.0</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <button class="nav-item active" data-tab="overview" onclick="switchTab('overview',this)">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M2 10a8 8 0 1116 0A8 8 0 012 10zm8-3a3 3 0 100 6 3 3 0 000-6z"/></svg>
+        Overview
+      </button>
+      <button class="nav-item" data-tab="analyzer" onclick="switchTab('analyzer',this)">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-.293.707L13 10.414V15a1 1 0 01-.553.894l-4 2A1 1 0 017 17v-6.586L3.293 6.707A1 1 0 013 6V4z" clip-rule="evenodd"/></svg>
+        Analyzer
+      </button>
+      <button class="nav-item" data-tab="history" onclick="switchTab('history',this)">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>
+        History
+        <span class="nav-badge" id="history-badge">0</span>
+      </button>
+    </nav>
+  </div>
+
+  <div class="sidebar-bottom">
+    <div class="sidebar-user">
+      <div class="avatar" id="sidebar-avatar">?</div>
+      <div class="sidebar-user-info">
+        <span class="sidebar-user-name" id="sidebar-name">Loading</span>
+        <span class="sidebar-user-role">Candidate</span>
+      </div>
+    </div>
+    <button class="sidebar-logout" onclick="handleLogout()">
+      <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h7a1 1 0 100-2H4V5h6a1 1 0 100-2H3zm14.707 4.293a1 1 0 010 1.414L15.414 11H10a1 1 0 110-2h5.414l-2.707-2.707a1 1 0 011.414-1.414l4 4z" clip-rule="evenodd"/></svg>
+      Sign Out
+    </button>
+  </div>
+</aside>
+
+<!-- ══════════════════════════════════════════════════════════
+     MAIN CONTENT AREA
+══════════════════════════════════════════════════════════ -->
+<div class="app-main">
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="sidebar-toggle" onclick="toggleSidebar()">
+        <svg viewBox="0 0 20 20" fill="currentColor" width="18" height="18"><path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/></svg>
+      </button>
+      <div class="breadcrumb">
+        <span class="breadcrumb-app">RSA</span>
+        <svg viewBox="0 0 20 20" fill="currentColor" width="12" height="12"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+        <span id="breadcrumb-page">Overview</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-user">
+        <div class="topbar-avatar" id="topbar-avatar">?</div>
+        <span id="topbar-name">User</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── TAB: OVERVIEW ──────────────────────────────────────── -->
+  <section class="tab-content active" id="tab-overview">
+    <div class="content-wrap">
+
+      <div class="section-header">
+        <div>
+          <h1 class="section-title">Overview</h1>
+          <p class="section-sub">Your latest resume analysis at a glance.</p>
+        </div>
+        <button class="btn btn-accent" onclick="switchTab('analyzer', document.querySelector('[data-tab=analyzer]'))">+ New Analysis</button>
+      </div>
+
+      <!-- KPI Strip -->
+      <div class="kpi-strip">
+        <div class="kpi-card">
+          <div class="kpi-icon kpi-orange">📄</div>
+          <div class="kpi-body">
+            <span class="kpi-value" id="kpi-analyses">0</span>
+            <span class="kpi-label">Analyses Run</span>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon kpi-blue">🎯</div>
+          <div class="kpi-body">
+            <span class="kpi-value" id="kpi-best-score">—</span>
+            <span class="kpi-label">Best Score</span>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon kpi-green">✅</div>
+          <div class="kpi-body">
+            <span class="kpi-value" id="kpi-top-skills">—</span>
+            <span class="kpi-label">Skills Found</span>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon kpi-amber">🏆</div>
+          <div class="kpi-body">
+            <span class="kpi-value" id="kpi-tier">—</span>
+            <span class="kpi-label">Best Tier</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty state -->
+      <div class="overview-empty" id="overview-empty">
+        <div class="empty-visual">📊</div>
+        <h3>No data yet</h3>
+        <p>Run your first analysis to see charts and insights.</p>
+        <button class="btn btn-accent" onclick="switchTab('analyzer', document.querySelector('[data-tab=analyzer]'))">Analyze a Resume →</button>
+      </div>
+
+      <!-- Charts Grid -->
+      <div class="charts-grid" id="charts-grid">
+
+        <div class="chart-card chart-card--sm">
+          <div class="chart-card-header">
+            <span class="chart-title">Skill Coverage</span>
+            <span class="chart-sub" id="donut-sub">0 / 0</span>
+          </div>
+          <div class="donut-wrap">
+            <canvas id="donutChart"></canvas>
+            <div class="donut-center">
+              <span class="donut-pct" id="donut-pct">0%</span>
+              <span class="donut-label">matched</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-card chart-card--sm">
+          <div class="chart-card-header">
+            <span class="chart-title">Score Meter</span>
+            <span id="gauge-tier" class="chip">—</span>
+          </div>
+          <div class="gauge-wrap">
+            <canvas id="gaugeChart"></canvas>
+            <div class="gauge-center">
+              <span class="gauge-pct" id="gauge-pct">0</span>
+              <span class="gauge-label">/ 100</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-card chart-card--wide">
+          <div class="chart-card-header">
+            <span class="chart-title">Detected Skills</span>
+            <span class="chart-sub" id="bar-sub">—</span>
+          </div>
+          <div class="bar-wrap">
+            <canvas id="barChart"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card chart-card--wide">
+          <div class="chart-card-header">
+            <span class="chart-title">Category Radar</span>
+            <span class="chart-sub">skill domain coverage</span>
+          </div>
+          <div class="radar-wrap">
+            <canvas id="radarChart"></canvas>
+          </div>
+        </div>
+
+      </div><!-- /charts-grid -->
+
+      <!-- Skill breakdown -->
+      <div class="breakdown-section" id="breakdown-section">
+        <div class="breakdown-cols">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">✅ Detected Skills</span>
+              <span class="chip chip-green" id="detected-chip">0</span>
+            </div>
+            <div class="panel-body">
+              <div class="skills-grid" id="ov-detected-skills"></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">❌ Missing Skills</span>
+              <span class="chip chip-gray" id="missing-chip">0</span>
+            </div>
+            <div class="panel-body">
+              <div class="skills-grid" id="ov-missing-skills"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── TAB: ANALYZER ──────────────────────────────────────── -->
+  <section class="tab-content" id="tab-analyzer">
+    <div class="content-wrap">
+
+      <div class="section-header">
+        <div>
+          <h1 class="section-title">Resume Analyzer</h1>
+          <p class="section-sub">Upload a TXT or PDF to extract your technical skill profile.</p>
+        </div>
+      </div>
+
+      <div class="analyzer-layout">
+
+        <div class="panel upload-panel">
+          <div class="panel-header">
+            <span class="panel-title">📁 Upload Resume</span>
+          </div>
+          <div class="panel-body">
+            <div class="alert" id="upload-alert"></div>
+
+            <div class="upload-zone" id="drop-zone">
+              <input type="file" id="resume-file" accept=".txt,.pdf" onchange="onFileSelect(this)" />
+              <div class="upload-zone-inner">
+                <div class="upload-icon-box">
+                  <svg viewBox="0 0 48 48" fill="none" width="36" height="36">
+                    <rect width="48" height="48" rx="10" fill="var(--accent-light)"/>
+                    <path d="M24 14v14M24 14l-5 5M24 14l5 5" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M14 30v2a2 2 0 002 2h16a2 2 0 002-2v-2" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/>
+                  </svg>
+                </div>
+                <p class="upload-title">Drop your resume here</p>
+                <p class="upload-sub">TXT or PDF &middot; max 5 MB</p>
+                <span class="upload-browse">or click to browse</span>
+              </div>
+            </div>
+
+            <div class="file-selected" id="file-name-display"></div>
+
+            <button class="btn btn-primary btn-full" id="analyze-btn" onclick="handleAnalyze()" disabled>
+              <span class="spinner" id="analyze-spinner"></span>
+              <span id="analyze-text">Analyze Resume</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">📚 Skill Dictionary</span>
+            <span class="chip chip-gray" id="dict-count">30</span>
+          </div>
+          <div class="panel-body">
+            <div class="skills-grid" id="skill-dictionary"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── TAB: HISTORY ───────────────────────────────────────── -->
+  <section class="tab-content" id="tab-history">
+    <div class="content-wrap">
+
+      <div class="section-header">
+        <div>
+          <h1 class="section-title">Analysis History</h1>
+          <p class="section-sub">All resumes analyzed this session.</p>
+        </div>
+        <button class="btn btn-ghost" onclick="clearHistory()">Clear All</button>
+      </div>
+
+      <div class="overview-empty" id="history-empty">
+        <div class="empty-visual">🕐</div>
+        <h3>No analyses yet</h3>
+        <p>Your history will appear here after each analysis.</p>
+      </div>
+
+      <div class="history-list" id="history-list"></div>
+
+    </div>
+  </section>
+
+</div><!-- /app-main -->
+
+<script src="script.js"></script>
+<script>
+// ── Auth guard ────────────────────────────────────────────────────────
+const token = localStorage.getItem('rsa_token');
+if (!token) window.location.href = 'login.html';
+
+const user     = JSON.parse(localStorage.getItem('rsa_user') || '{}');
+const userName = user.name || user.email || 'User';
+const initials = userName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+
+document.getElementById('sidebar-name').textContent   = userName;
+document.getElementById('sidebar-avatar').textContent  = initials;
+document.getElementById('topbar-name').textContent     = userName;
+document.getElementById('topbar-avatar').textContent   = initials;
+
+// ── Session state ─────────────────────────────────────────────────────
+let analysisHistory = JSON.parse(sessionStorage.getItem('rsa_history') || '[]');
+let charts = {};
+
+// ── Skill / Category data ─────────────────────────────────────────────
+const SKILLS = [
+  "Python","Java","C++","JavaScript","TypeScript","React","Node.js",
+  "MongoDB","SQL","PostgreSQL","MySQL","AWS","Docker","Kubernetes",
+  "Machine Learning","Deep Learning","Data Analysis","HTML","CSS","Git",
+  "Django","Flask","Spring","TensorFlow","PyTorch","Redis","GraphQL",
+  "REST API","Linux","Azure"
+];
+
+const CATEGORIES = {
+  'Languages':    ["Python","Java","C++","JavaScript","TypeScript"],
+  'Frontend':     ["React","HTML","CSS"],
+  'Backend':      ["Node.js","Django","Flask","Spring","REST API","GraphQL"],
+  'Databases':    ["MongoDB","SQL","PostgreSQL","MySQL","Redis"],
+  'DevOps/Cloud': ["AWS","Docker","Kubernetes","Linux","Azure","Git"],
+  'ML / Data':    ["Machine Learning","Deep Learning","Data Analysis","TensorFlow","PyTorch"],
+};
+
+// ── Build skill dictionary ────────────────────────────────────────────
+const dictEl = document.getElementById('skill-dictionary');
+document.getElementById('dict-count').textContent = SKILLS.length;
+SKILLS.forEach(s => {
+  const b = document.createElement('span');
+  b.className = 'skill-badge missing';
+  b.id = 'dict-' + s.replace(/[^a-z0-9]/gi, '_');
+  b.textContent = s;
+  dictEl.appendChild(b);
+});
+
+// ── Tab switcher ──────────────────────────────────────────────────────
+const BC = { overview: 'Overview', analyzer: 'Analyzer', history: 'History' };
+
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  document.getElementById('breadcrumb-page').textContent = BC[id] || id;
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+// ── File upload ───────────────────────────────────────────────────────
+const dropZone = document.getElementById('drop-zone');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0]; if (f) setFile(f);
+});
+
+let selectedFile = null;
+
+function onFileSelect(inp) { if (inp.files[0]) setFile(inp.files[0]); }
+
+function setFile(file) {
+  selectedFile = file;
+  const d = document.getElementById('file-name-display');
+  d.textContent = '✓ ' + file.name + '  (' + (file.size / 1024).toFixed(1) + ' KB)';
+  d.classList.add('show');
+  document.getElementById('analyze-btn').disabled = false;
+  clearAlert(document.getElementById('upload-alert'));
+}
+
+// ── Analyze ───────────────────────────────────────────────────────────
+async function handleAnalyze() {
+  if (!selectedFile) return;
+  const alertEl = document.getElementById('upload-alert');
+  const spinner = document.getElementById('analyze-spinner');
+  const btnText = document.getElementById('analyze-text');
+  const btn     = document.getElementById('analyze-btn');
+
+  clearAlert(alertEl);
+  btn.disabled = true;
+  spinner.classList.add('show');
+  btnText.textContent = 'Analyzing…';
+
+  try {
+    const fd = new FormData();
+    fd.append('resume', selectedFile);
+    const res  = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + token },
+      body: fd,
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Analysis failed.');
+
+    // Store in session history
+    analysisHistory.unshift({ ...data, fileName: selectedFile.name, date: new Date().toLocaleString() });
+    sessionStorage.setItem('rsa_history', JSON.stringify(analysisHistory));
+
+    // Highlight dictionary
+    SKILLS.forEach(s => {
+      const el = document.getElementById('dict-' + s.replace(/[^a-z0-9]/gi, '_'));
+      if (el) el.className = 'skill-badge ' + (data.detectedSkills.includes(s) ? 'detected' : 'missing');
+    });
+
+    renderOverview(data);
+    renderHistory();
+    updateKPIs();
+    switchTab('overview', document.querySelector('[data-tab=overview]'));
+
+  } catch (err) {
+    showAlert(alertEl, err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    spinner.classList.remove('show');
+    btnText.textContent = 'Analyze Resume';
+  }
+}
+
+// ── Render overview + charts ──────────────────────────────────────────
+function renderOverview(data) {
+  const detected  = data.detectedSkills;
+  const missing   = data.allSkills.filter(s => !detected.includes(s));
+  const pct       = data.percentage;
+
+  // Show panels
+  document.getElementById('overview-empty').style.display    = 'none';
+  document.getElementById('charts-grid').style.display       = 'grid';
+  document.getElementById('breakdown-section').style.display = 'block';
+
+  // Header info
+  document.getElementById('donut-sub').textContent  = detected.length + ' / ' + data.total;
+  document.getElementById('donut-pct').textContent  = pct + '%';
+  document.getElementById('gauge-pct').textContent  = pct;
+  const gt = document.getElementById('gauge-tier');
+  gt.textContent = data.tier;
+  gt.className   = 'chip tier-' + data.tier.toLowerCase();
+
+  // ── 1. Donut Chart ──────────────────────────────────────────────────
+  killChart('donutChart');
+  charts.donutChart = new Chart(document.getElementById('donutChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Detected', 'Missing'],
+      datasets: [{
+        data: [detected.length, missing.length],
+        backgroundColor: ['#C8410A', '#E8E0D0'],
+        borderColor: ['#9B2F06', '#D6CEBC'],
+        borderWidth: 2,
+        hoverOffset: 6,
+      }]
+    },
+    options: {
+      cutout: '74%',
+      plugins: { legend: { display: false } },
+      animation: { duration: 900 },
+    }
+  });
+
+  // ── 2. Half-Donut Gauge ─────────────────────────────────────────────
+  killChart('gaugeChart');
+  const gc = pct >= 70 ? '#2D6A4F' : pct >= 45 ? '#1E40AF' : pct >= 25 ? '#B45309' : '#A8997F';
+  charts.gaugeChart = new Chart(document.getElementById('gaugeChart'), {
+    type: 'doughnut',
+    data: {
+      datasets: [{
+        data: [pct, 100 - pct],
+        backgroundColor: [gc, '#E8E0D0'],
+        borderColor: ['transparent', 'transparent'],
+        borderWidth: 0,
+        circumference: 180,
+        rotation: -90,
+      }]
+    },
+    options: {
+      cutout: '70%',
+      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      animation: { duration: 1000 },
+    }
+  });
+
+  // ── 3. Horizontal Bar ───────────────────────────────────────────────
+  killChart('barChart');
+  const palette = [
+    '#C8410A','#2D6A4F','#1E40AF','#B45309','#7C3AED',
+    '#0F766E','#BE123C','#0369A1','#92400E','#1A4731',
+    '#6D28D9','#065F46','#1E3A8A','#78350F','#5B21B6',
+  ];
+  const bLabels = detected.length ? detected : ['No skills found'];
+  const bColors = bLabels.map((_, i) => palette[i % palette.length]);
+
+  charts.barChart = new Chart(document.getElementById('barChart'), {
+    type: 'bar',
+    data: {
+      labels: bLabels,
+      datasets: [{
+        label: 'Detected',
+        data: bLabels.map(() => 1),
+        backgroundColor: bColors,
+        borderRadius: 4,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: () => '  Present in resume' } }
+      },
+      scales: {
+        x: { display: false, max: 1.5 },
+        y: {
+          grid: { color: 'rgba(0,0,0,0.04)' },
+          ticks: { font: { family: "'DM Mono', monospace", size: 11 }, color: '#6B5F4E' }
+        }
+      },
+      animation: { duration: 800 },
+    }
+  });
+  document.getElementById('bar-sub').textContent = detected.length + ' skills detected';
+
+  // ── 4. Radar Chart ──────────────────────────────────────────────────
+  killChart('radarChart');
+  const catKeys  = Object.keys(CATEGORIES);
+  const catPcts  = catKeys.map(cat => {
+    const skills = CATEGORIES[cat];
+    return Math.round(skills.filter(s => detected.includes(s)).length / skills.length * 100);
+  });
+
+  charts.radarChart = new Chart(document.getElementById('radarChart'), {
+    type: 'radar',
+    data: {
+      labels: catKeys,
+      datasets: [{
+        label: 'Coverage %',
+        data: catPcts,
+        backgroundColor: 'rgba(200,65,10,0.12)',
+        borderColor: '#C8410A',
+        pointBackgroundColor: '#C8410A',
+        pointRadius: 4,
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        r: {
+          min: 0, max: 100,
+          ticks: { stepSize: 25, font: { size: 10, family: "'DM Mono', monospace" }, color: '#A8997F', backdropColor: 'transparent' },
+          grid:  { color: 'rgba(0,0,0,0.07)' },
+          pointLabels: { font: { size: 11, family: "'DM Mono', monospace" }, color: '#6B5F4E' },
+          angleLines: { color: 'rgba(0,0,0,0.07)' },
+        }
+      },
+      animation: { duration: 1000 },
+    }
+  });
+
+  // ── Skill breakdown ─────────────────────────────────────────────────
+  const detEl = document.getElementById('ov-detected-skills');
+  detEl.innerHTML = '';
+  if (detected.length) {
+    detected.forEach(s => {
+      const b = document.createElement('span');
+      b.className = 'skill-badge detected'; b.textContent = s;
+      detEl.appendChild(b);
+    });
+  } else {
+    detEl.innerHTML = '<span style="font-size:0.82rem;color:var(--ink-faint)">None detected.</span>';
+  }
+
+  const misEl = document.getElementById('ov-missing-skills');
+  misEl.innerHTML = '';
+  missing.forEach(s => {
+    const b = document.createElement('span');
+    b.className = 'skill-badge missing'; b.textContent = s;
+    misEl.appendChild(b);
+  });
+
+  document.getElementById('detected-chip').textContent = detected.length;
+  document.getElementById('missing-chip').textContent  = missing.length;
+}
+
+function killChart(id) {
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+}
+
+// ── KPI strip ─────────────────────────────────────────────────────────
+function updateKPIs() {
+  document.getElementById('kpi-analyses').textContent = analysisHistory.length;
+  document.getElementById('history-badge').textContent = analysisHistory.length;
+  if (!analysisHistory.length) return;
+  const best = analysisHistory.reduce((a, b) => a.percentage > b.percentage ? a : b);
+  document.getElementById('kpi-best-score').textContent = best.percentage + '%';
+  document.getElementById('kpi-top-skills').textContent = best.score;
+  document.getElementById('kpi-tier').textContent       = best.tier;
+}
+
+// ── History tab ───────────────────────────────────────────────────────
+function renderHistory() {
+  const listEl  = document.getElementById('history-list');
+  const emptyEl = document.getElementById('history-empty');
+  if (!analysisHistory.length) {
+    listEl.innerHTML = ''; emptyEl.style.display = 'flex'; return;
+  }
+  emptyEl.style.display = 'none';
+  listEl.innerHTML = '';
+  analysisHistory.forEach((entry, i) => {
+    const div = document.createElement('div');
+    div.className = 'history-card fade-up';
+    div.style.animationDelay = (i * 0.06) + 's';
+    div.innerHTML = `
+      <div class="history-card-left">
+        <div class="history-icon">📄</div>
+        <div>
+          <p class="history-filename">${entry.fileName}</p>
+          <p class="history-date">${entry.date}</p>
+        </div>
+      </div>
+      <div class="history-card-right">
+        <div class="history-stat">
+          <span class="history-stat-val">${entry.score}/${entry.total}</span>
+          <span class="history-stat-label">Skills</span>
+        </div>
+        <div class="history-stat">
+          <span class="history-stat-val">${entry.percentage}%</span>
+          <span class="history-stat-label">Coverage</span>
+        </div>
+        <span class="chip tier-${entry.tier.toLowerCase()}">${entry.tier}</span>
+        <button class="btn btn-ghost btn-sm" onclick="loadHistory(${i})">View →</button>
+      </div>
+    `;
+    listEl.appendChild(div);
+  });
+}
+
+function loadHistory(i) {
+  renderOverview(analysisHistory[i]);
+  switchTab('overview', document.querySelector('[data-tab=overview]'));
+}
+
+function clearHistory() {
+  analysisHistory = [];
+  sessionStorage.removeItem('rsa_history');
+  renderHistory();
+  updateKPIs();
+  document.getElementById('overview-empty').style.display    = 'flex';
+  document.getElementById('charts-grid').style.display       = 'none';
+  document.getElementById('breakdown-section').style.display = 'none';
+  ['kpi-best-score','kpi-top-skills','kpi-tier'].forEach(id => {
+    document.getElementById(id).textContent = '—';
+  });
+}
+
+function handleLogout() {
+  localStorage.removeItem('rsa_token');
+  localStorage.removeItem('rsa_user');
+  sessionStorage.removeItem('rsa_history');
+  window.location.href = 'login.html';
+}
+
+// Init
+renderHistory();
+updateKPIs();
+</script>
+</body>
+</html>

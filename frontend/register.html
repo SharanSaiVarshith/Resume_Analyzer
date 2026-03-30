@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register — Resume Skill Analyzer</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="page-center">
+
+  <div class="card fade-up">
+    <!-- Logo -->
+    <div class="wordmark">
+      <div class="wordmark-icon">RSA</div>
+      <div class="wordmark-text">
+        <span>Resume Skill</span>
+        Analyzer
+      </div>
+    </div>
+
+    <h2 style="margin-bottom:0.3rem;">Create an account</h2>
+    <p style="color:var(--ink-muted);font-size:0.9rem;margin-bottom:1.75rem;">
+      Start analyzing your resume in seconds.
+    </p>
+
+    <!-- Alert -->
+    <div class="alert" id="alert-msg"></div>
+
+    <!-- Form -->
+    <div class="form-group">
+      <label for="name">Full name</label>
+      <input type="text" id="name" placeholder="Jane Doe" autocomplete="name" />
+    </div>
+
+    <div class="form-group">
+      <label for="email">Email address</label>
+      <input type="email" id="email" placeholder="you@example.com" autocomplete="email" />
+    </div>
+
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="Min. 6 characters" autocomplete="new-password" />
+    </div>
+
+    <div class="form-group">
+      <label for="confirm">Confirm password</label>
+      <input type="password" id="confirm" placeholder="Repeat password" autocomplete="new-password" />
+    </div>
+
+    <button class="btn btn-primary" id="register-btn" onclick="handleRegister()">
+      <span class="spinner" id="spinner"></span>
+      <span id="btn-text">Create Account</span>
+    </button>
+
+    <div class="divider">or</div>
+
+    <div class="auth-footer">
+      Already have an account?
+      <a href="login.html">Sign in →</a>
+    </div>
+  </div>
+
+</div>
+
+<script src="script.js"></script>
+<script>
+  if (localStorage.getItem('rsa_token')) {
+    window.location.href = 'dashboard.html';
+  }
+
+  async function handleRegister() {
+    const name     = document.getElementById('name').value.trim();
+    const email    = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const confirm  = document.getElementById('confirm').value;
+    const alert    = document.getElementById('alert-msg');
+    const spinner  = document.getElementById('spinner');
+    const btnText  = document.getElementById('btn-text');
+    const btn      = document.getElementById('register-btn');
+
+    clearAlert(alert);
+
+    if (!name || !email || !password || !confirm) {
+      showAlert(alert, 'All fields are required.', 'error');
+      return;
+    }
+    if (password.length < 6) {
+      showAlert(alert, 'Password must be at least 6 characters.', 'error');
+      return;
+    }
+    if (password !== confirm) {
+      showAlert(alert, 'Passwords do not match.', 'error');
+      return;
+    }
+
+    btn.disabled = true;
+    spinner.classList.add('show');
+    btnText.textContent = 'Creating…';
+
+    try {
+      const res  = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || 'Registration failed.');
+
+      showAlert(alert, 'Account created! Redirecting to login…', 'success');
+      setTimeout(() => window.location.href = 'login.html', 1500);
+
+    } catch (err) {
+      showAlert(alert, err.message, 'error');
+      btn.disabled = false;
+      spinner.classList.remove('show');
+      btnText.textContent = 'Create Account';
+    }
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleRegister();
+  });
+</script>
+</body>
+</html>
